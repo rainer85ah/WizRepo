@@ -47,6 +47,11 @@ build {
   sources = ["source.amazon-ebs.ubuntu"]
 
   provisioner "file" {
+    source      = "./wizexercise.txt"
+    destination = "/tmp/wizexercise.txt"
+  }
+
+  provisioner "file" {
     source      = "./backup_mongo_to_s3.sh"
     destination = "/tmp/backup_mongo_to_s3.sh"
   }

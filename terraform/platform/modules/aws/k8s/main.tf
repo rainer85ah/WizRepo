@@ -1,3 +1,28 @@
+# Use the recommended 'tfe_outputs' data source for secure access to remote state outputs.
+data "tfe_outputs" "infra" {
+  organization = "Valuein"
+  workspace    = "wiz-infra-"
+}
+
+provider "kubernetes" {
+  alias = "eks"
+
+  host                   = data.tfe_outputs.infra.values.eks_cluster_endpoint
+  cluster_ca_certificate = base64decode(data.tfe_outputs.infra.values.eks_cluster_certificate_authority_data)
+  token                  = data.tfe_outputs.infra.values.aws_eks_cluster_auth.cluster.token
+}
+
+provider "helm" {
+  alias = "eks"
+
+  kubernetes = {
+    host                   = data.tfe_outputs.infra.values.eks_cluster_endpoint
+    cluster_ca_certificate = base64decode(data.tfe_outputs.infra.values.eks_cluster_certificate_authority_data)
+    token                  = data.tfe_outputs.infra.values.aws_eks_cluster_auth.cluster.token
+    load_config_file       = false
+  }
+}
+
 resource "helm_release" "aws_lb_controller" {
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
@@ -7,7 +32,7 @@ resource "helm_release" "aws_lb_controller" {
 
   values = [
     yamlencode({
-      clusterName = var.eks_cluster_name
+      clusterName = data.tfe_outputs.infra.values.eks_cluster_name
       serviceAccount = {
         create = true
         name   = "aws-load-balancer-controller"

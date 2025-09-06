@@ -34,8 +34,8 @@ services:
       terraform plan -out platform_plan &&
       /bin/sh"
 
-# Usage:
-# docker compose run --rm --name mongodb-ami mongodb-ami
-# docker compose run --rm --name prereq terraform
+# Project Execution Steps:
+# docker compose run --rm --name packer-net terraform
+# docker compose run --rm --name build-ami packer
 # docker compose run --rm --name infra terraform
 # docker compose run --rm --name platform terraform

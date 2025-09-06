@@ -49,6 +49,7 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
 resource "aws_s3_bucket_policy" "combined_access_policy" {
   bucket = aws_s3_bucket.db_backups_bucket.id
   policy = data.aws_iam_policy_document.bucket_policy_document.json
+  depends_on = [aws_s3_bucket_public_access_block.public_access]
 }
 
 data "aws_iam_policy_document" "bucket_policy_document" {
