@@ -1,0 +1,1 @@
+This is the required wizexercise.txt file for the exercise container image.

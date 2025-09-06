@@ -1,0 +1,41 @@
+services:
+  packer:
+    image: hashicorp/packer:1.14.1
+    working_dir: /packer
+    volumes:
+      - ./terraform/prerequisite/mongodb-ami:/packer
+    env_file:
+      - .env
+    entrypoint: sh
+    tty: true
+    stdin_open: true
+    command: -c "
+      packer init . && 
+      packer validate . && 
+      packer build . && 
+      sh"
+
+  terraform:
+    image: hashicorp/terraform:1.13.1
+    working_dir: /terraform
+    volumes:
+      - ./terraform:/terraform:rw
+      - ~/.ssh:/root/.ssh:ro
+    env_file:
+      - .env
+    entrypoint: /bin/sh
+    tty: true
+    stdin_open: true
+    command: -c "
+      cd ./platform && 
+      terraform init -upgrade && 
+      terraform fmt && 
+      terraform validate &&
+      terraform plan -out platform_plan &&
+      /bin/sh"
+
+# Usage:
+# docker compose run --rm --name mongodb-ami mongodb-ami
+# docker compose run --rm --name prereq terraform
+# docker compose run --rm --name infra terraform
+# docker compose run --rm --name platform terraform

@@ -1,0 +1,35 @@
+# Local Terraform directories
+**/.terraform/
+**/.terraform.lock.hcl
+
+# Terraform variable files that may contain sensitive data
+*.tfvars
+*.tfvars.json
+# Environment variable files
+.env
+*.env
+
+# Crash logs and plan output
+crash.log
+terraform.tfplan
+terraform.tfplan.binary
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# Sensitive provider credentials
+*.pem
+*.key
+
+# Ignore IDE/editor files
+# VSCode
+.vscode/
+# JetBrains / PyCharm
+.idea/
+# MacOS
+.DS_Store
+# Linux swap files
+*~
+# Temporary files
+*.tmp
