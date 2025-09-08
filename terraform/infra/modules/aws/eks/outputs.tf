@@ -22,15 +22,20 @@ output "eks_cluster_security_group_id" {
   value = module.eks.cluster_security_group_id
 }
 
-output "eks_pod_sg_id" {
-  value = aws_security_group.eks_pod_sg.id
-}
+# output "eks_pod_sg_id" {
+#   value = aws_security_group.eks_pod_sg.id
+# }
 
 output "eks_cluster_cidr" {
   value = module.eks.cluster_service_cidr
 }
 
-output "eks_private_subnet_cidrs" {
-  description = "The CIDR blocks of the private subnets used by the EKS cluster"
-  value       = [for s in data.aws_subnet.private_subnets : s.cidr_block]
+output "eks_admin_sa_role_arn" {
+  description = "The ARN of the IAM role with admin access for the EKS service account."
+  value       = aws_iam_role.eks_admin_sa_role.arn
+}
+
+output "eks_admin_sa_role_name" {
+  description = "The name of the IAM role with admin access for the EKS service account."
+  value       = aws_iam_role.eks_admin_sa_role.name
 }

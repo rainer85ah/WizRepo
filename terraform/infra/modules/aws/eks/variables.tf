@@ -18,3 +18,11 @@ variable "private_subnets_ids" {
   description = "List of private subnet IDs"
   type        = list(string)
 }
+
+variable "eks_admin_arns" {
+  type = list(string)
+  default = [
+    "arn:aws:iam::493512621621:user/rainer85ah",
+    "arn:aws:iam::493512621621:role/wiz-eks-eks-admin-role"
+  ]
+}

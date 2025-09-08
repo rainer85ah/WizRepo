@@ -1,8 +1,35 @@
+# Security group for EKS nodes
+resource "aws_security_group" "eks_nodes_sg" {
+  name        = "${var.eks_cluster_name}-nodes-sg"
+  description = "EKS nodes security group"
+  vpc_id      = var.vpc_id
+
+  # Outbound to anywhere (needed for NAT, SSM, ECR, etc.)
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Optional: restrict inbound if needed (SSH only via SSM, so usually none)
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
+  tags = {
+    Name = "${var.eks_cluster_name}-nodes-sg"
+  }
+}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "21.1.5"
 
-  name        = var.eks_cluster_name
+  name = var.eks_cluster_name
   kubernetes_version = "1.33"
   endpoint_public_access = true
   endpoint_private_access = true
@@ -13,6 +40,12 @@ module "eks" {
   enable_irsa = true
 
   fargate_profiles = {
+    controllers = {
+      selectors = [
+        { namespace = "kube-system" }
+      ]
+      subnet_ids = var.private_subnets_ids
+    }
     web = {
       selectors = [
         { namespace = "default" }
@@ -33,36 +66,56 @@ module "eks" {
   }
 }
 
-# Security group for EKS pods (private)
-resource "aws_security_group" "eks_pod_sg" {
-  name = "${var.eks_cluster_name}-eks-pod-sg-"
-  description = "EKS pod security group"
-  vpc_id      = var.vpc_id
+# Create access entries for each admin
+resource "aws_eks_access_entry" "admins" {
+  for_each          = toset(var.eks_admin_arns)
+  cluster_name      = module.eks.cluster_name
+  principal_arn     = each.value
+  kubernetes_groups = ["eks-administrators"]
+}
 
-  tags = {
-    Name = "${var.eks_cluster_name}-eks-pod-sg"
+# Attach the cluster-admin policy to each admin
+resource "aws_eks_access_policy_association" "admins" {
+  for_each      = aws_eks_access_entry.admins
+  cluster_name  = module.eks.cluster_name
+  principal_arn = each.value.principal_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
   }
 }
 
-# Allow HTTP traffic from internet
-resource "aws_vpc_security_group_ingress_rule" "ec2_http" {
-  security_group_id = aws_security_group.eks_pod_sg.id
-  cidr_ipv4         = "0.0.0.0/0"
-  from_port         = 80
-  to_port           = 80
-  ip_protocol       = "tcp"
-  description       = "Allow HTTP from all IPs"
-}
-
-# Allow pods to talk out to the internet
-resource "aws_vpc_security_group_egress_rule" "eks_all_outbound" {
-  security_group_id = aws_security_group.eks_pod_sg.id
-  cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1"
-  description       = "Allow all outbound from pods"
-}
-
-data "aws_subnet" "private_subnets" {
-  count = length(var.private_subnets_ids)
-  id    = var.private_subnets_ids[count.index]
-}
+# data "aws_subnet" "private_subnets" {
+#   count = length(var.private_subnets_ids)
+#   id    = var.private_subnets_ids[count.index]
+# }
+#
+# # Security group for EKS pods (private)
+# resource "aws_security_group" "eks_pod_sg" {
+#   name = "${var.eks_cluster_name}-eks-pod-sg-"
+#   description = "EKS pod security group"
+#   vpc_id      = var.vpc_id
+#
+#   tags = {
+#     Name = "${var.eks_cluster_name}-eks-pod-sg"
+#   }
+# }
+#
+# # Allow HTTP traffic from internet
+# resource "aws_vpc_security_group_ingress_rule" "ec2_http" {
+#   security_group_id = aws_security_group.eks_pod_sg.id
+#   cidr_ipv4         = "0.0.0.0/0"
+#   from_port         = 80
+#   to_port           = 80
+#   ip_protocol       = "tcp"
+#   description       = "Allow HTTP from all IPs"
+# }
+#
+# # Allow pods to talk out to the internet
+# resource "aws_vpc_security_group_egress_rule" "eks_all_outbound" {
+#   security_group_id = aws_security_group.eks_pod_sg.id
+#   cidr_ipv4         = "0.0.0.0/0"
+#   ip_protocol       = "-1"
+#   description       = "Allow all outbound from pods"
+# }

@@ -1,6 +1,7 @@
 services:
   packer:
     image: hashicorp/packer:1.14.1
+    container_name: build-ami
     working_dir: /packer
     volumes:
       - ./terraform/prerequisite/mongodb-ami:/packer
@@ -27,14 +28,15 @@ services:
     tty: true
     stdin_open: true
     command: -c "
-      cd ./platform && 
+      cd ./infra && 
       terraform init -upgrade && 
       terraform fmt && 
       terraform validate &&
-      terraform plan -out platform_plan &&
+      terraform plan -out plan &&
+      terraform apply "plan" &&
       /bin/sh"
 
-# Project Execution Steps:
+# Project Execution Steps: Change the directory and plan's name before executing commands below.
 # docker compose run --rm --name packer-net terraform
 # docker compose run --rm --name build-ami packer
 # docker compose run --rm --name infra terraform

@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.12.2"
+  required_version = "~> 1.13.1"
 
   required_providers {
     aws = {
@@ -16,7 +16,8 @@ terraform {
     organization = "Valuein"
 
     workspaces {
-      name = "wiz-infra-"
+      project = "wiz"
+      name    = "wiz-infra-"
     }
   }
 }
@@ -52,6 +53,5 @@ module "ec2" {
   vpc_id                   = module.network.vpc_id
   aws_region               = var.aws_region
   s3_bucket_name           = module.s3_bucket_db_backups.bucket_id
-  eks_pod_sg_id            = module.eks.eks_pod_sg_id
-  eks_private_subnet_cidrs = module.eks.eks_private_subnet_cidrs
+  eks_private_subnet_cidrs = module.network.private_subnet_cidrs
 }

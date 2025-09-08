@@ -19,6 +19,16 @@ output "internet_gateway_id" {
   description = "Internet Gateway ID"
 }
 
+output "public_subnet_cidrs" {
+  description = "List of public subnet CIDRs"
+  value       = module.network.public_subnet_cidrs
+}
+
+output "private_subnet_cidrs" {
+  description = "List of private subnet CIDRs"
+  value       = module.network.private_subnet_cidrs
+}
+
 # S3
 output "bucket_id" {
   description = "The ID of the S3 bucket."
@@ -92,7 +102,12 @@ output "eks_cluster_security_group_id" {
   value       = module.eks.eks_cluster_security_group_id
 }
 
-output "eks_private_subnet_cidrs" {
-  description = "The CIDR blocks of the private subnets used by the EKS cluster"
-  value       = module.eks.eks_private_subnet_cidrs
+output "eks_admin_sa_role_arn" {
+  description = "The ARN of the IAM role with admin access for the EKS service account."
+  value       = module.eks.eks_admin_sa_role_arn
+}
+
+output "eks_admin_sa_role_name" {
+  description = "The name of the IAM role with admin access for the EKS service account."
+  value       = module.eks.eks_admin_sa_role_name
 }

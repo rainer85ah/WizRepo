@@ -25,11 +25,6 @@ variable "s3_bucket_name" {
   type        = string
 }
 
-variable "eks_pod_sg_id" {
-  description = "Security group ID of the EKS pods"
-  type        = string
-}
-
 variable "eks_private_subnet_cidrs" {
   description = "The CIDR blocks of the private subnets used by the EKS cluster"
   type = list(string)
