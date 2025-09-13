@@ -12,11 +12,11 @@ MONGO_URI="mongodb://${MONGO_ADMIN_USER}:${MONGO_ADMIN_PASS}@localhost:27017"
 mkdir -p "$BACKUP_DIR"
 
 echo "$(date) - Starting MongoDB backup..."
-if /usr/bin/mongodump --uri="$MONGO_URI" --archive="$BACKUP_FILE" --gzip --oplog; then
+if /usr/bin/mongodump --uri="$MONGO_URI" --archive="$BACKUP_FILE" --gzip; then
     echo "$(date) - Backup created: $BACKUP_FILE"
 
     # Upload to S3 using IAM role
-    if aws s3 cp "$BACKUP_FILE" "s3://${S3_BUCKET_NAME}/mongodb_backups/" --storage-class INTELLIGENT_TIERING; then
+    if /usr/local/bin/aws s3 cp "$BACKUP_FILE" "s3://${S3_BUCKET_NAME}/mongodb_backups/" --storage-class INTELLIGENT_TIERING; then
         echo "$(date) - Backup uploaded to S3: ${S3_BUCKET_NAME}"
     else
         echo "$(date) - ERROR: Failed to upload to S3."

@@ -23,6 +23,7 @@ resource "aws_s3_bucket_cors_configuration" "db_backups_cors" {
     allowed_methods = ["GET"]
     allowed_origins = ["*"]
     allowed_headers = ["*"]
+    expose_headers = []
   }
 }
 
@@ -77,9 +78,9 @@ locals {
 
 resource "aws_s3_object" "website_files" {
   for_each = local.website_files
-
   bucket = aws_s3_bucket.db_backups_bucket.id
   key    = each.value
   source = "${path.module}/files/${each.value}"
   etag   = filemd5("${path.module}/files/${each.value}")
+  depends_on = [aws_s3_bucket_policy.combined_access_policy]
 }

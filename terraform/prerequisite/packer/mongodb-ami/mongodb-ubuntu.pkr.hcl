@@ -10,6 +10,7 @@ packer {
 hcp_packer_registry {
   bucket_name       = "mongodb-ami"
   bucket_description = "MongoDB AMIs"
+
   build_labels = {
     environment = "dev"
     os          = "ubuntu"
@@ -34,7 +35,7 @@ variable "source_ami" {
 
 variable "subnet_id" {
   type = string
-  default = "subnet-0c93c18eba21662fa"
+  default = "subnet-0c822fa70219ace73"
 }
 
 source "amazon-ebs" "ubuntu" {
@@ -45,21 +46,16 @@ source "amazon-ebs" "ubuntu" {
 
   instance_type = var.aws_ec2_type
   ssh_username  = "ubuntu"
-  ami_name      = "ec2-mongodb-ubuntu-{{timestamp}}"
+  ami_name      = "mongodb-ubuntu-ami-{{timestamp}}"
 
   tags = {
-    Name = "ec2-mongodb-ubuntu"
+    Name = "mongodb-ubuntu-ami"
   }
 }
 
 build {
   name    = "ec2-mongodb-ubuntu"
   sources = ["source.amazon-ebs.ubuntu"]
-
-  provisioner "file" {
-    source      = "./wizexercise.txt"
-    destination = "/tmp/wizexercise.txt"
-  }
 
   provisioner "file" {
     source      = "./mongod.conf"
@@ -79,7 +75,16 @@ build {
       # Update and install dependencies
       "sudo apt-get update -y",
       "sudo apt-get upgrade -y",
-      "sudo apt-get install -y gnupg wget software-properties-common netcat",
+      "sudo apt-get install -y gnupg wget software-properties-common netcat unzip",
+
+      # Create a file inside the ami
+      "echo 'This sentence will be baked into the AMI.' > ~/wizexercise.txt",
+
+      # Download aws cli
+      "wget -qO /tmp/awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip",
+      "unzip /tmp/awscliv2.zip",
+      "sudo ./aws/install",
+      "sudo rm -rf /tmp/awscliv2.zip",
 
       # Download MongoDB GPG key safely
       "wget -qO /tmp/mongodb-server-6.0.gpg https://www.mongodb.org/static/pgp/server-6.0.asc",
@@ -123,7 +128,7 @@ build {
       "sudo chmod +x /usr/local/bin/backup_mongo_to_s3.sh",
 
       # Install cron job safely
-      "echo '*/5 * * * * root /usr/local/bin/backup_mongo_to_s3.sh >> /var/log/mongodb_backup.log 2>&1' | sudo tee /etc/cron.d/mongodb_backup",
+      "echo '0 * * * * root /usr/local/bin/backup_mongo_to_s3.sh >> /var/log/mongodb_backup.log 2>&1' | sudo tee /etc/cron.d/mongodb_backup",
       "sudo chmod 644 /etc/cron.d/mongodb_backup",
       "sudo systemctl restart cron"
     ]

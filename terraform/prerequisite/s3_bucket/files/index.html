@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>S3 Bucket Listing</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1 { font-size: 24px; }
-    ul { list-style-type: none; padding: 0; }
-    li { margin: 5px 0; }
-    a { text-decoration: none; color: blue; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S3 Bucket File Listing</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Bucket Contents</h1>
-  <ul id="file-list"></ul>
-
-  <script src="list-objects.js"></script>
+<div class="container">
+    <h1>S3 Bucket File Listing</h1>
+    <div id="file-list-container">
+        <p>Loading files...</p>
+    </div>
+</div>
+<script src="list-objects.js"></script>
 </body>
 </html>
