@@ -75,15 +75,6 @@ locals {
   website_files = fileset("${path.module}/files", "*")
 }
 
-# Ensure bucket ownership controls allow public access via policy only
-resource "aws_s3_bucket_ownership_controls" "db_backups_ownership" {
-  bucket = aws_s3_bucket.db_backups_bucket.id
-
-  rule {
-    object_ownership = "BucketOwnerEnforced"
-  }
-}
-
 resource "aws_s3_object" "website_files" {
   for_each = local.website_files
 

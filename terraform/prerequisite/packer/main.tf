@@ -13,7 +13,7 @@ terraform {
 
     workspaces {
       project = "wiz"
-      name = "wiz-prereq-"
+      name    = "wiz-prereq-packer"
     }
   }
 }

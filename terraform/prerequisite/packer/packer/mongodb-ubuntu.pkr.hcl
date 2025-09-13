@@ -17,6 +17,16 @@ hcp_packer_registry {
   }
 }
 
+variable "aws_region" {
+  type = string
+  default = "us-east-1"
+}
+
+variable "aws_ec2_type" {
+  type = string
+  default = "t3.medium"
+}
+
 variable "source_ami" {
   type = string
   default = "ami-0fb0b230890ccd1e6"
@@ -24,18 +34,18 @@ variable "source_ami" {
 
 variable "subnet_id" {
   type = string
-  default = "subnet-0b0fb0b9f166e8868"
+  default = "subnet-0c93c18eba21662fa"
 }
 
 source "amazon-ebs" "ubuntu" {
-  region        = "us-east-1"
+  region        = var.aws_region
   source_ami    = var.source_ami
-  instance_type = "t2.micro"
-  ssh_username  = "ubuntu"
-  ami_name      = "ec2-mongodb-ubuntu-{{timestamp}}"
-
   subnet_id     = var.subnet_id
   associate_public_ip_address = true
+
+  instance_type = var.aws_ec2_type
+  ssh_username  = "ubuntu"
+  ami_name      = "ec2-mongodb-ubuntu-{{timestamp}}"
 
   tags = {
     Name = "ec2-mongodb-ubuntu"
@@ -52,6 +62,11 @@ build {
   }
 
   provisioner "file" {
+    source      = "./mongod.conf"
+    destination = "/tmp/mongod.conf"
+  }
+
+  provisioner "file" {
     source      = "./backup_mongo_to_s3.sh"
     destination = "/tmp/backup_mongo_to_s3.sh"
   }
@@ -64,7 +79,7 @@ build {
       # Update and install dependencies
       "sudo apt-get update -y",
       "sudo apt-get upgrade -y",
-      "sudo apt-get install -y gnupg wget software-properties-common",
+      "sudo apt-get install -y gnupg wget software-properties-common netcat",
 
       # Download MongoDB GPG key safely
       "wget -qO /tmp/mongodb-server-6.0.gpg https://www.mongodb.org/static/pgp/server-6.0.asc",
@@ -83,17 +98,33 @@ build {
       "sudo systemctl enable mongod",
       "sudo systemctl start mongod",
 
-      # Enable authentication
-      "sudo sed -i '/#security:/a security:\\n  authorization: \"enabled\"' /etc/mongod.conf",
-      "sudo systemctl restart mongod",
+      # Wait for MongoDB to be ready
+      "until nc -z 127.0.0.1 27017; do echo 'Waiting for MongoDB to start...'; sleep 1; done",
 
       # Create admin user
-      "sudo mongosh --eval 'db.getSiblingDB(\"admin\").createUser({user:\"mongodb_admin\", pwd:\"pass123\", roles:[{role:\"root\", db:\"admin\"}]})'",
+      "mongosh --eval 'db.getSiblingDB(\"admin\").createUser({user: \"mongodb_admin\", pwd: \"pass123\", roles: [{role: \"root\", db: \"admin\"}]})'",
+
+      # Override MongoDB config
+      "sudo mv /tmp/mongod.conf /etc/mongod.conf",
+      "sudo chown root:root /etc/mongod.conf",
+      "sudo chmod 644 /etc/mongod.conf",
+      "sudo systemctl restart mongod",
+
+      # Persist environment variables for cron and scripts
+      "sudo tee /etc/profile.d/custom_env.sh > /dev/null <<EOF",
+      "export S3_BUCKET_NAME=wiz-s3-bucket-db-backups",
+      "export MONGO_ADMIN_USER=mongodb_admin",
+      "export MONGO_ADMIN_PASS=pass123",
+      "EOF",
+      "sudo chmod +x /etc/profile.d/custom_env.sh",
 
       # Setup backup script
       "sudo mv /tmp/backup_mongo_to_s3.sh /usr/local/bin/backup_mongo_to_s3.sh",
       "sudo chmod +x /usr/local/bin/backup_mongo_to_s3.sh",
-      "echo '0 16 * * * root S3_BUCKET_NAME=$S3_BUCKET_NAME /usr/local/bin/backup_mongo_to_s3.sh > /var/log/mongodb_backup.log 2>&1' | sudo tee /etc/cron.d/mongodb_backup",
+
+      # Install cron job safely
+      "echo '*/5 * * * * root /usr/local/bin/backup_mongo_to_s3.sh >> /var/log/mongodb_backup.log 2>&1' | sudo tee /etc/cron.d/mongodb_backup",
+      "sudo chmod 644 /etc/cron.d/mongodb_backup",
       "sudo systemctl restart cron"
     ]
   }

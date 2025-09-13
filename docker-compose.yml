@@ -4,7 +4,7 @@ services:
     container_name: build-ami
     working_dir: /packer
     volumes:
-      - ./terraform/prerequisite/mongodb-ami:/packer
+      - ./terraform/prerequisite/packer/mongodb-ami:/packer
     env_file:
       - .env
     entrypoint: sh
@@ -16,28 +16,22 @@ services:
       packer build . && 
       sh"
 
+  # docker compose run --rm --name build terraform
+
   terraform:
     image: hashicorp/terraform:1.13.1
-    working_dir: /terraform
+    working_dir: /terraform/platform
     volumes:
       - ./terraform:/terraform:rw
-      - ~/.ssh:/root/.ssh:ro
     env_file:
       - .env
     entrypoint: /bin/sh
     tty: true
     stdin_open: true
     command: -c "
-      cd ./infra && 
       terraform init -upgrade && 
       terraform fmt && 
       terraform validate &&
-      terraform plan -out plan &&
-      terraform apply "plan" &&
+      terraform plan &&
+      terraform apply -auto-approve &&
       /bin/sh"
-
-# Project Execution Steps: Change the directory and plan's name before executing commands below.
-# docker compose run --rm --name packer-net terraform
-# docker compose run --rm --name build-ami packer
-# docker compose run --rm --name infra terraform
-# docker compose run --rm --name platform terraform
