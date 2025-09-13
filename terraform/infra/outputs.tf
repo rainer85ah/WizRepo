@@ -29,51 +29,40 @@ output "private_subnet_cidrs" {
   value       = module.network.private_subnet_cidrs
 }
 
-# S3
-output "bucket_id" {
-  description = "The ID of the S3 bucket."
-  value       = module.s3_bucket_db_backups.bucket_id
+output "ec2_instance_sg_id" {
+  description = "The ID of the security group attached to the EC2 instances."
+  value       = module.network.ec2_instance_sg_id
 }
 
-output "bucket_arn" {
-  description = "The ARN of the S3 bucket."
-  value       = module.s3_bucket_db_backups.bucket_arn
+output "alb_sg_id" {
+  description = "The ID of the security group attached to the ALB."
+  value       = module.network.alb_sg_id
 }
 
-output "bucket_regional_domain_name" {
-  description = "The regional domain name of the S3 bucket."
-  value       = module.s3_bucket_db_backups.bucket_regional_domain_name
-}
-
-output "website_endpoint" {
-  description = "The S3 static website endpoint URL."
-  value       = module.s3_bucket_db_backups.website_endpoint
+output "eks_node_sg_id" {
+  description = "The ID of the security group attached to the EKS node."
+  value       = module.network.eks_node_sg_id
 }
 
 # EC2
-output "instance_ids" {
+output "ec2_instance_ids" {
   description = "A list of the IDs of the EC2 instances."
-  value       = module.ec2.instance_ids
+  value       = module.ec2.ec2_instance_ids
 }
 
-output "public_ips" {
+output "ec2_public_ips" {
   description = "A list of the public IP addresses assigned to the EC2 instances."
-  value       = module.ec2.public_ips
+  value       = module.ec2.ec2_public_ips
 }
 
-output "private_ips" {
+output "ec2_private_ips" {
   description = "A list of the private IP addresses of the EC2 instances."
-  value       = module.ec2.private_ips
+  value       = module.ec2.ec2_private_ips
 }
 
-output "instance_profiles" {
+output "ec2_instance_profiles" {
   description = "A list of the IAM instance profiles associated with the EC2 instances."
-  value       = module.ec2.instance_profiles
-}
-
-output "security_group_id" {
-  description = "The ID of the security group attached to the EC2 instances."
-  value       = module.ec2.ec2_instance_sg_id
+  value       = module.ec2.ec2_instance_profiles
 }
 
 # EKS
@@ -100,14 +89,4 @@ output "oidc_provider_arn" {
 output "eks_cluster_security_group_id" {
   description = "EKS Cluster Security Group ID"
   value       = module.eks.eks_cluster_security_group_id
-}
-
-output "eks_admin_sa_role_arn" {
-  description = "The ARN of the IAM role with admin access for the EKS service account."
-  value       = module.eks.eks_admin_sa_role_arn
-}
-
-output "eks_admin_sa_role_name" {
-  description = "The name of the IAM role with admin access for the EKS service account."
-  value       = module.eks.eks_admin_sa_role_name
 }

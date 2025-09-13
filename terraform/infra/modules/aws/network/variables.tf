@@ -1,7 +1,13 @@
-variable "name" {
-  description = "Prefix name for resources"
+variable "prefix_name" {
+  description = "Prefix Name"
   type        = string
-  default     = "s3_bucket_db_backups"
+  default     = "network"
+}
+
+variable "cluster_name" {
+  description = "EKS Cluster Name"
+  type        = string
+  default     = "wiz-eks-cluster"
 }
 
 variable "vpc_cidr" {
@@ -10,17 +16,26 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
-variable "azs" {
-  type = list(string)
-  default = ["us-east-1a", "us-east-1b"]
-}
-
 variable "public_subnet_cidrs" {
+  description = "A list of public subnet CIDRs (one per AZ)"
   type = list(string)
   default = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
 variable "private_subnet_cidrs" {
+  description = "A list of private subnet CIDRs (one per AZ)"
   type = list(string)
-  default = ["10.0.11.0/24", "10.0.12.0/24"]
+  default = ["10.0.101.0/24", "10.0.102.0/24"]
+}
+
+variable "azs" {
+  description = "A list of availability zones"
+  type = list(string)
+  default = []
+}
+
+variable "maximum_azs" {
+  description = "Maximum number of availability zones"
+  type        = number
+  default     = 2
 }
