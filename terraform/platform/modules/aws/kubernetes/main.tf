@@ -1,130 +1,68 @@
-# Single ClusterRoleBinding to bind 'eks-administrators' group to cluster-admin
-resource "kubernetes_cluster_role_binding_v1" "eks_admins_binding" {
+# Get EKS cluster info from TFE
+data "tfe_outputs" "infra" {
+  organization = "Valuein"
+  workspace    = "wiz-infra-dev"
+}
+
+# Get EKS cluster info
+data "aws_eks_cluster" "this" {
+  name = local.cluster_name
+}
+
+data "aws_eks_cluster_auth" "this" {
+  name = local.cluster_name
+}
+
+locals {
+  cluster_name = data.tfe_outputs.infra.values.eks_cluster_name
+  eks_cluster_endpoint = data.tfe_outputs.infra.values.eks_cluster_endpoint
+  cluster_certificate_authority_data = data.tfe_outputs.infra.values.cluster_certificate_authority_data
+}
+
+provider "kubernetes" {
+  host                   = local.eks_cluster_endpoint
+  cluster_ca_certificate = base64decode(local.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", local.cluster_name]
+  }
+}
+
+resource "kubernetes_deployment" "webapp_deployment" {
   metadata {
-    name = "eks-admins-binding"
+    name      = "webapp-deployment"
+    labels    = { app = "webapp" }
   }
-
-  role_ref {
-    api_group = "rbac.authorization.k8s.io"
-    kind      = "ClusterRole"
-    name      = "cluster-admin"
-  }
-
-  subject {
-    kind      = "Group"
-    name      = "eks-administrators"
-    api_group = "rbac.authorization.k8s.io"
-  }
-}
-
-resource "helm_release" "aws_lb_controller" {
-  depends_on = [kubernetes_cluster_role_binding_v1.eks_admins_binding]
-
-  name       = "aws-load-balancer-controller"
-  repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-  namespace  = "kube-system"
-  replace    = true
-  wait       = true
-  atomic     = true
-  timeout    = 900
-
-  values = [
-    yamlencode({
-      clusterName = var.cluster_name
-      region = var.aws_region
-      vpcId  = var.vpc_id
-      installCRDs = true
-
-      serviceAccount = {
-        create = false
-        name   = var.eks_admin_sa_role_name
-        annotations = {
-          "eks.amazonaws.com/role-arn" = var.eks_admin_sa_role_arn
-        }
-      }
-      rbac = {
-        create = true
-      }
-    })
-  ]
-}
-
-resource "null_resource" "webapp_lb_cleanup" {
-  triggers = { always_run = timestamp() }
-
-  provisioner "local-exec" {
-    command     = "kubectl delete service webapp-lb -n default || true"
-    interpreter = ["/bin/sh", "-c"]
-  }
-}
-
-resource "kubernetes_service" "webapp_lb" {
-  depends_on = [
-    null_resource.webapp_lb_cleanup,
-    helm_release.aws_lb_controller,
-    kubernetes_deployment.webapp
-  ]
-
-  metadata {
-    name      = "webapp-lb"
-    namespace = "default"
-    annotations = {
-      "service.beta.kubernetes.io/aws-load-balancer-type"   = "alb"
-      "service.beta.kubernetes.io/aws-load-balancer-scheme" = "internet-facing"
-      "service.beta.kubernetes.io/aws-load-balancer-target-type" = "ip"
-    }
-  }
-
-  spec {
-    selector = {
-      app = "webapp"
-    }
-
-    port {
-      port        = 80
-      target_port = 80
-    }
-
-    type = "LoadBalancer"
-  }
-}
-
-resource "kubernetes_deployment" "webapp" {
-  metadata {
-    name      = "webapp"
-    namespace = "default"
-    labels = {
-      app = "webapp"
-    }
-  }
-
   spec {
     replicas = 2
-
-    selector {
-      match_labels = {
-        app = "webapp"
-      }
-    }
-
+    selector { match_labels = { app = "webapp" } }
     template {
-      metadata {
-        labels = {
-          app = "webapp"
-        }
-      }
-
+      metadata { labels = { app = "webapp" } }
       spec {
         container {
           name  = "webapp"
           image = "nginx:latest"
-
-          port {
-            container_port = 80
-          }
+          port { container_port = 80 }
         }
       }
     }
+  }
+}
+
+# The Nginx service is now of type ClusterIP, only for internal traffic.
+resource "kubernetes_service" "webapp_service" {
+  metadata {
+    name = "webapp-service"
+  }
+
+  spec {
+    selector = { app = "webapp" }
+    port {
+      port        = 80
+      target_port = 80
+      protocol    = "TCP"
+    }
+    type = "LoadBalancer"
   }
 }
