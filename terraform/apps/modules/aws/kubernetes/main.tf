@@ -1,22 +1,22 @@
 # Get EKS cluster info from TFE
-data "tfe_outputs" "infra" {
+data "tfe_outputs" "platform" {
   organization = "Valuein"
-  workspace    = "wiz-infra-dev"
+  workspace    = "wiz-platform-dev"
 }
 
 # Get EKS cluster info
 data "aws_eks_cluster" "this" {
-  name = local.cluster_name
+  name = data.tfe_outputs.platform.values.eks_cluster_name
 }
 
 data "aws_eks_cluster_auth" "this" {
-  name = local.cluster_name
+  name = data.tfe_outputs.platform.values.eks_cluster_name
 }
 
 locals {
-  cluster_name = data.tfe_outputs.infra.values.eks_cluster_name
-  eks_cluster_endpoint = data.tfe_outputs.infra.values.eks_cluster_endpoint
-  cluster_certificate_authority_data = data.tfe_outputs.infra.values.cluster_certificate_authority_data
+  cluster_name = data.tfe_outputs.platform.values.eks_cluster_name
+  eks_cluster_endpoint = data.tfe_outputs.platform.values.eks_cluster_endpoint
+  cluster_certificate_authority_data = data.tfe_outputs.platform.values.cluster_certificate_authority_data
 }
 
 provider "kubernetes" {
@@ -42,8 +42,8 @@ resource "kubernetes_deployment" "webapp_deployment" {
       spec {
         container {
           name  = "webapp"
-          image = "nginx:latest"
-          port { container_port = 80 }
+          image = "ghcr.io/rainer85ah/wiz-webapp:latest"
+          port { container_port = 5000 }
         }
       }
     }
@@ -60,7 +60,7 @@ resource "kubernetes_service" "webapp_service" {
     selector = { app = "webapp" }
     port {
       port        = 80
-      target_port = 80
+      target_port = 5000
       protocol    = "TCP"
     }
     type = "LoadBalancer"
