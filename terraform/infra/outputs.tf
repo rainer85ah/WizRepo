@@ -4,12 +4,12 @@ output "vpc_id" {
   description = "VPC ID where resources are deployed"
 }
 
-output "public_subnets" {
+output "public_subnets_ids" {
   value       = module.network.public_subnet_ids
   description = "List of public subnet IDs"
 }
 
-output "private_subnets" {
+output "private_subnet_ids" {
   value       = module.network.private_subnet_ids
   description = "List of private subnet IDs"
 }
@@ -58,35 +58,4 @@ output "ec2_public_ips" {
 output "ec2_private_ips" {
   description = "A list of the private IP addresses of the EC2 instances."
   value       = module.ec2.ec2_private_ips
-}
-
-output "ec2_instance_profiles" {
-  description = "A list of the IAM instance profiles associated with the EC2 instances."
-  value       = module.ec2.ec2_instance_profiles
-}
-
-# EKS
-output "eks_cluster_name" {
-  description = "EKS Cluster Name"
-  value       = module.eks.eks_cluster_name
-}
-
-output "eks_cluster_endpoint" {
-  description = "EKS Cluster API server endpoint"
-  value       = module.eks.eks_cluster_endpoint
-}
-
-output "cluster_certificate_authority_data" {
-  description = "EKS Cluster certificate_authority_data"
-  value       = module.eks.cluster_certificate_authority_data
-}
-
-output "oidc_provider_arn" {
-  description = "EKS Cluster OIDC Provider Arn"
-  value       = module.eks.oidc_provider_arn
-}
-
-output "eks_cluster_security_group_id" {
-  description = "EKS Cluster Security Group ID"
-  value       = module.eks.eks_cluster_security_group_id
 }

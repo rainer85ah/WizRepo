@@ -4,11 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.9.0"
-    }
-    hcp = {
-      source  = "hashicorp/hcp"
-      version = "~> 0.109.0"
+      version = "~> 6.13.0"
     }
   }
 
@@ -21,8 +17,6 @@ terraform {
     }
   }
 }
-
-provider "hcp" {}
 
 provider "aws" {
   region = var.aws_region
@@ -40,12 +34,4 @@ module "ec2" {
   aws_region         = var.aws_region
   public_subnet_ids  = module.network.public_subnet_ids
   ec2_instance_sg_id = module.network.ec2_instance_sg_id
-}
-
-module "eks" {
-  source             = "./modules/aws/eks"
-  cluster_name       = var.eks_cluster_name
-  aws_region         = var.aws_region
-  vpc_id             = module.network.vpc_id
-  private_subnet_ids = module.network.private_subnet_ids
 }
