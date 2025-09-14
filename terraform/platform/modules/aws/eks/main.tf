@@ -31,14 +31,12 @@ module "eks" {
   }
 }
 
-data "aws_caller_identity" "this" {}
-
 # Terraform resource for the access policy association
-resource "aws_eks_access_policy_association" "developer_admin" {
-  cluster_name  = var.cluster_name
-  principal_arn = "arn:aws:iam::${data.aws_caller_identity.this.account_id}:user/odl_user_1851004"
-
-  # The AmazonEKSClusterAdminPolicy grants the most permissive access
-  policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  access_scope { type = "cluster" }
-}
+# resource "aws_eks_access_policy_association" "developer_admin" {
+#   cluster_name  = var.cluster_name
+#   principal_arn = "arn:aws:iam::140023402797:user/odl_user_1851004"
+#
+#   # The AmazonEKSClusterAdminPolicy grants the most permissive access
+#   policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+#   access_scope { type = "cluster" }
+# }
