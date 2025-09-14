@@ -20,7 +20,7 @@ services:
 
   terraform:
     image: hashicorp/terraform:1.13.1
-    working_dir: /terraform/platform
+    working_dir: /terraform/apps
     volumes:
       - ./terraform:/terraform:rw
     env_file:

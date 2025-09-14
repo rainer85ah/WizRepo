@@ -35,3 +35,7 @@ docker compose run --rm --name platform terraform
 
 7. Deploy the webapps
 docker compose run --rm --name webapps terraform
+
+# Build an Image
+docker build -t flask-mongo-app .
+docker run -p 8000:8000 flask-mongo-app
