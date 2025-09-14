@@ -77,9 +77,6 @@ build {
       "sudo apt-get upgrade -y",
       "sudo apt-get install -y gnupg wget software-properties-common netcat unzip",
 
-      # Create a file inside the ami
-      "echo 'This sentence will be baked into the AMI.' > ~/wizexercise.txt",
-
       # Download aws cli
       "wget -qO /tmp/awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip",
       "unzip /tmp/awscliv2.zip",
