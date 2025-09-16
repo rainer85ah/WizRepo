@@ -1,0 +1,86 @@
+name: Wiz Terraform CI/CD
+
+on:
+#  # Feature branches and dev branch pushes
+#  push:
+#    branches:
+#      - dev
+#      - 'feature/**'
+#    paths:
+#      - 'terraform/infra/**'
+#      - 'terraform/platform/**'
+#      - 'terraform/apps/**'
+#
+#  # PRs to stag, main branches
+#  pull_request:
+#    branches:
+#      - dev
+#      - stag
+#      - main
+#    paths:
+#      - 'terraform/infra/**'
+#      - 'terraform/platform/**'
+#      - 'terraform/apps/**'
+
+  # Manual triggers - useful for testing
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment: (dev, uat, prod)'
+        required: true
+        default: 'dev'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.13.1
+
+      - name: Determine environment
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            ENV="dev"
+          elif [[ "${{ github.ref }}" == "refs/heads/stag" ]]; then
+            ENV="uat"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            ENV="prod"
+          else
+            ENV="ci"  # for feature/* branches
+          fi
+          echo "Selected environment: $ENV"
+          echo "ENV=$ENV" >> $GITHUB_ENV
+
+      - name: Set Terraform directory
+        run: |
+          DIR="infra"
+          if [[ $(git diff --name-only ${{ github.sha }}~1 ${{ github.sha }}) =~ ^terraform/platform/ ]]; then
+            DIR="platform"
+          elif [[ $(git diff --name-only ${{ github.sha }}~1 ${{ github.sha }}) =~ ^terraform/apps/ ]]; then
+            DIR="apps"
+          fi
+          echo "DIR=$DIR" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform/${{ env.DIR }} init
+
+      - name: Terraform Format
+        run: terraform -chdir=terraform/${{ env.DIR }} fmt
+
+      - name: Terraform Validate
+        run: terraform -chdir=terraform/${{ env.DIR }} validate
+
+      - name: Terraform Plan
+        run: terraform -chdir=terraform/${{ env.DIR }} plan -var="environment=${{ env.ENV }}"
+
+      - name: Terraform Apply
+        if: ${{ github.event_name != 'pull_request' && env.ENV != 'ci' }}
+        run: terraform -chdir=terraform/${{ env.DIR }} apply -auto-approve -var="environment=${{ env.ENV }}"
