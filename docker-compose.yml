@@ -13,10 +13,7 @@ services:
     command: -c "
       packer init . && 
       packer validate . && 
-      packer build . && 
-      sh"
-
-  # docker compose run --rm --name build terraform
+      packer build ."
 
   terraform:
     image: hashicorp/terraform:1.13.1
