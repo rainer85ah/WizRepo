@@ -42,7 +42,7 @@ resource "kubernetes_deployment" "webapp_deployment" {
       spec {
         container {
           name  = "webapp"
-          image = "ghcr.io/rainer85ah/webapp:latest"
+          image = "ghcr.io/rainer85ah/wiz/webapp:latest"
           port { container_port = 8080 }
           image_pull_policy = "Always"
         }
