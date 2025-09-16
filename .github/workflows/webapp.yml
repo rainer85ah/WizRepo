@@ -33,5 +33,5 @@ jobs:
           file: ./webapp/Dockerfile
           context: ./webapp
           tags: |
-            ghcr.io/webapp:latest
-            ghcr.io/webapp:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/webapp:latest
+            ghcr.io/${{ github.repository }}/webapp:${{ github.sha }}
