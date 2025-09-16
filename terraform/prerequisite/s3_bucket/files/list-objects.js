@@ -1,4 +1,5 @@
 const BUCKET_URL = "https://wiz-s3-bucket-db-backups.s3.us-east-1.amazonaws.com/";
+const DIRECTORY_PREFIX = "mongodb_backups/";
 
 async function getBucketContents() {
     const response = await fetch(BUCKET_URL, {
@@ -9,13 +10,19 @@ async function getBucketContents() {
     const xmlDoc = parser.parseFromString(text, "text/xml");
     const contents = xmlDoc.getElementsByTagName("Contents");
 
-    return Array.from(contents).map(item => {
+    return Array.from(contents)
+    .map(item => {
         const key = item.getElementsByTagName("Key")[0].textContent;
         return {
             key: key,
             url: `${BUCKET_URL}${key}`
         };
-    });
+    })
+    .filter(item => item.key.startsWith(DIRECTORY_PREFIX))
+    .map(item => ({
+        key: item.key.replace(DIRECTORY_PREFIX, ""),
+        url: item.url
+    }));
 }
 
 function renderFileList(files) {
