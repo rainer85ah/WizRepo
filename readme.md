@@ -98,10 +98,12 @@ AWS credentials with permissions to create IAM roles, EC2, S3 buckets, and netwo
 Important: Update the working directory of the Terraform service in docker-compose.yaml to point to the correct project path.
 
 ```commandline
-docker compose run --rm --name build-aws-role terraform
+docker compose run --rm --name aws-role terraform
 docker compose run --rm --name oidc-test terraform
+
 docker compose run --rm --name pre-req terraform
 docker compose run --rm --name build-ami packer
+
 docker compose run --rm --name infra terraform
 docker compose run --rm --name platform terraform
 docker compose run --rm --name apps terraform
@@ -115,6 +117,18 @@ docker run -p 5000:5000 webapp:latest
 docker tag webapp:latest ghcr.io/rainer85ah/wiz-webapp:latest
 docker push ghcr.io/rainer85ah/wiz-webapp:latest
 ```
+
+## CI/CD Piepline
+
+| Branch / Event            | Init | Fmt | Validate | Plan | Apply                    |
+| ------------------------- | ---- | --- | -------- | ---- | ------------------------ |
+| `feature/*` push          | ✅    | ✅   | ✅        | ✅    | ❌                        |
+| PR to `dev`               | ✅    | ✅   | ✅        | ✅    | ❌                        |
+| Push to `dev`             | ✅    | ✅   | ✅        | ✅    | ✅                        |
+| PR to `stag` / `main`     | ✅    | ✅   | ✅        | ✅    | ❌                        |
+| Push to `stag` / `main`   | ✅    | ✅   | ✅        | ✅    | ✅                        |
+| Manual workflow\_dispatch | ✅    | ✅   | ✅        | ✅    | ✅ (if environment != ci) |
+
 
 ## 📌 Highlights
 
