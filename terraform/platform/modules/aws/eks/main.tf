@@ -7,21 +7,33 @@ module "eks" {
   vpc_id             = var.vpc_id
   name               = var.cluster_name
   subnet_ids         = var.private_subnet_ids
+  control_plane_subnet_ids = var.private_subnet_ids
+
+  addons = {
+    coredns                = {}
+    eks-pod-identity-agent = {
+      before_compute = true
+    }
+    kube-proxy             = {}
+    vpc-cni                = {
+      before_compute = true
+    }
+  }
 
   endpoint_public_access  = true
   endpoint_private_access = true
   enable_cluster_creator_admin_permissions = true
 
-  compute_config = {
-    enabled    = true
-    node_pools = ["general-purpose"]
-  }
-
-  addons = {
-    vpc-cni                = { before_compute = true }
-    kube-proxy             = { before_compute = true }
-    coredns                = {}
-    eks-pod-identity-agent = { before_compute = true }
+  eks_managed_node_groups = {
+    webapp_nodes = {
+      instance_types = ["t3.medium"]
+      min_size     = 1
+      max_size     = 2
+      desired_size = 2
+      node_labels = {
+        "app" = "webapp"
+      }
+    }
   }
 
   tags = {
@@ -30,13 +42,3 @@ module "eks" {
     Terraform   = "true"
   }
 }
-
-# Terraform resource for the access policy association
-# resource "aws_eks_access_policy_association" "developer_admin" {
-#   cluster_name  = var.cluster_name
-#   principal_arn = "arn:aws:iam::140023402797:user/odl_user_1851004"
-#
-#   # The AmazonEKSClusterAdminPolicy grants the most permissive access
-#   policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-#   access_scope { type = "cluster" }
-# }
