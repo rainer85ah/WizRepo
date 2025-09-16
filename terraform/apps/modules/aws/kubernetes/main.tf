@@ -42,15 +42,15 @@ resource "kubernetes_deployment" "webapp_deployment" {
       spec {
         container {
           name  = "webapp"
-          image = "ghcr.io/rainer85ah/wiz-webapp:latest"
-          port { container_port = 5000 }
+          image = "ghcr.io/rainer85ah/webapp:latest"
+          port { container_port = 8080 }
+          image_pull_policy = "Always"
         }
       }
     }
   }
 }
 
-# The Nginx service is now of type ClusterIP, only for internal traffic.
 resource "kubernetes_service" "webapp_service" {
   metadata {
     name = "webapp-service"
@@ -60,7 +60,7 @@ resource "kubernetes_service" "webapp_service" {
     selector = { app = "webapp" }
     port {
       port        = 80
-      target_port = 5000
+      target_port = 8080
       protocol    = "TCP"
     }
     type = "LoadBalancer"
