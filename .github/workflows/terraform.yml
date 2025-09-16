@@ -26,7 +26,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Target environment: (dev, uat, prod)'
+        description: 'Environment: (dev, uat, prod)'
         required: true
         options:
           - dev
@@ -34,7 +34,7 @@ on:
           - prod
         default: 'dev'
       directory:
-        description: 'Target environment: (apps, platform, infra)'
+        description: 'Directory: (apps, platform, infra)'
         required: true
         options:
           - apps
