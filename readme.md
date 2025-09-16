@@ -154,4 +154,16 @@ Enable Terraform module testing with terraform plan and validate
 
 ## 📚 References
 
-Terraform Documentation
+
+* [Terraform](https://developer.hashicorp.com/terraform/docs)
+
+* [AWS](https://docs.aws.amazon.com)
+
+* [Kubernetes](https://kubernetes.io/docs/home)
+
+
+---
+
+✨ Made with Terraform by Rainer Arencibia
+
+![Wiz](webapp/static/wiz.jpg)
