@@ -16,13 +16,12 @@ resource "aws_security_group" "ec2_instance_sg" {
     description = "Allow SSH from the internet"
   }
 
-  # testing db connection from home
   ingress {
     from_port   = 27017
     to_port     = 27017
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow MongoDB connections from the internet"
+    cidr_blocks = aws_subnet.private[*].cidr_block
+    description = "Allow MongoDB connections from EKS nodes"
   }
 
   egress {
@@ -30,6 +29,7 @@ resource "aws_security_group" "ec2_instance_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
   }
 }
 
@@ -55,28 +55,11 @@ resource "aws_security_group" "alb_sg" {
   }
 
   egress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.eks_node_sg.id]
-    description     = "Allow HTTP to EKS nodes"
-  }
-
-  egress {
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    security_groups = [aws_security_group.eks_node_sg.id]
-    description     = "Allow HTTPS to EKS nodes"
-  }
-
-  # testing db connection from home
-  egress {
-    from_port   = 27017
-    to_port     = 27017
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow MongoDB connections from the internet"
+    from_port         = 0
+    to_port           = 0
+    protocol          = "-1"
+    cidr_blocks       = ["0.0.0.0/0"]
+    description       = "Allow all outbound traffic"
   }
 
   tags = {
