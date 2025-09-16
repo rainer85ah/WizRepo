@@ -28,7 +28,19 @@ on:
       environment:
         description: 'Target environment: (dev, uat, prod)'
         required: true
+        options:
+          - dev
+          - uat
+          - prod
         default: 'dev'
+      directory:
+        description: 'Target environment: (apps, platform, infra)'
+        required: true
+        options:
+          - apps
+          - platform
+          - infra
+        default: 'apps'
 
 jobs:
   terraform:
@@ -36,10 +48,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.13.1
 
@@ -61,8 +73,11 @@ jobs:
 
       - name: Set Terraform directory
         run: |
-          DIR="infra"
-          if [[ $(git diff --name-only ${{ github.sha }}~1 ${{ github.sha }}) =~ ^terraform/platform/ ]]; then
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            DIR="${{ github.event.inputs.directory }}"
+          elif [[ $(git diff --name-only ${{ github.sha }}~1 ${{ github.sha }}) =~ ^terraform/infra/ ]]; then
+            DIR="infra"
+          elif [[ $(git diff --name-only ${{ github.sha }}~1 ${{ github.sha }}) =~ ^terraform/platform/ ]]; then
             DIR="platform"
           elif [[ $(git diff --name-only ${{ github.sha }}~1 ${{ github.sha }}) =~ ^terraform/apps/ ]]; then
             DIR="apps"
