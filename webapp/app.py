@@ -7,18 +7,17 @@ from bson.errors import InvalidId
 
 app = Flask(__name__)
 app.secret_key = "supersecret"  # use env variable in production
-
-DB_HOST = "ec2-18-234-163-210.compute-1.amazonaws.com"
+DB_HOST = "10.0.1.179"
 DB_NAME = "admin"
+
 
 def get_user_client(username, password):
     """Create a MongoClient for the given username/password"""
-    user_uri = f"mongodb://{username}:{password}@{DB_HOST}:27017/{DB_NAME}?serverSelectionTimeoutMS=5000"
-    client = MongoClient(user_uri)
-    # Trigger connection to verify credentials
+    mongo_uri = f"mongodb://{username}:{password}@{DB_HOST}:27017/{DB_NAME}?serverSelectionTimeoutMS=20000"
+    client = MongoClient(mongo_uri)
     client.admin.command("ping")
     print("DB connection successful.")
-    return client
+    return mongo_uri
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -27,22 +26,13 @@ def login():
         password = request.form["password"]
 
         try:
-            client = get_user_client(username, password)
-            db = client[DB_NAME]
+            session["mongo_uri"] = get_user_client(username, password)
+            session["user"] = username
+            session["is_admin"] = True
+            return redirect(url_for("dashboard"))
 
-            # Verify user document exists (optional)
-            user_doc = db.webapp_users.find_one({"username": username})
-            if user_doc and user_doc["password"] == password:
-                session["user"] = username
-                session["is_admin"] = user_doc.get("is_admin", False)
-                # store client info in session-like object (not actual client)
-                session["mongo_uri"] = f"mongodb://{username}:{password}@{DB_HOST}:27017/{DB_NAME}"
-                return redirect(url_for("dashboard"))
-            else:
-                flash("Invalid credentials", "danger")
-
-        except ServerSelectionTimeoutError:
-            flash("Cannot connect to MongoDB with these credentials", "danger")
+        except ServerSelectionTimeoutError as to:
+            flash(f"Cannot connect to MongoDB with these credentials: {to}.", "danger")
         except Exception as e:
             flash(f"Unexpected error: {str(e)}", "danger")
 
