@@ -50,6 +50,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Set Terraform Token
+        run: echo "TF_TOKEN_app_terraform_io=${{ secrets.TF_TOKEN_APP_TERRAFORM_IO }}" >> $GITHUB_ENV
+        
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
