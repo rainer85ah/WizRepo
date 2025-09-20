@@ -53,8 +53,8 @@ jobs:
         run: terraform -chdir=terraform/${{ env.DIR }} validate
 
       - name: Terraform Plan
-        run: terraform -chdir=terraform/${{ env.DIR }} plan"
+        run: terraform -chdir=terraform/${{ env.DIR }} plan
 
       - name: Terraform Apply
         if: ${{ github.event_name != 'pull_request' }}
-        run: terraform -chdir=terraform/${{ env.DIR }} apply -auto-approve"
+        run: terraform -chdir=terraform/${{ env.DIR }} apply -auto-approve
